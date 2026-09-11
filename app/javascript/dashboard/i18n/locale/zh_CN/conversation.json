@@ -243,6 +243,14 @@
       "PRIVATE_NOTE": "私人便笺",
       "SEND": "发送",
       "CREATE": "添加便笺",
+      "HALO_AI": {
+        "TITLE": "Halo AI回复建议",
+        "PRIVATE_NOTICE": "仅客服可见",
+        "EDITOR_LABEL": "编辑建议回复",
+        "APPLY": "填入回复框",
+        "SEND": "发送给客户",
+        "DISMISS": "忽略建议"
+      },
       "INSERT_READ_MORE": "查看更多",
       "DISMISS_REPLY": "忽略回复",
       "REPLYING_TO": "回复：",

@@ -39,6 +39,7 @@ import wootConstants, {
 } from 'dashboard/constants/globals';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { isHaloAiSuggestionMessage } from './haloAiSuggestion';
 
 export default {
   components: {
@@ -136,7 +137,9 @@ export default {
       return '';
     },
     getMessages() {
-      const messages = this.currentChat.messages || [];
+      const messages = (this.currentChat.messages || []).filter(
+        message => !isHaloAiSuggestionMessage(message)
+      );
       if (this.isAWhatsAppChannel) {
         return filterDuplicateSourceMessages(messages);
       }

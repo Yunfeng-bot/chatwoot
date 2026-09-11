@@ -12,6 +12,7 @@ import ReplyTopPanel from 'dashboard/components/widgets/WootWriter/ReplyTopPanel
 import ReplyEmailHead from './ReplyEmailHead.vue';
 import ReplyBottomPanel from 'dashboard/components/widgets/WootWriter/ReplyBottomPanel.vue';
 import CopilotReplyBottomPanel from 'dashboard/components/widgets/WootWriter/CopilotReplyBottomPanel.vue';
+import HaloAiSuggestion from './HaloAiSuggestion.vue';
 import ArticleSearchPopover from 'dashboard/routes/dashboard/helpcenter/components/ArticleSearch/SearchPopover.vue';
 import CopilotEditorSection from './CopilotEditorSection.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
@@ -61,6 +62,8 @@ import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
+import { findActiveHaloAiSuggestion } from './haloAiSuggestion';
+
 const EmojiIconPicker = defineAsyncComponent(
   () =>
     import('dashboard/components-next/emoji-icon-picker/EmojiIconPicker.vue')
@@ -84,6 +87,7 @@ export default {
     QuotedEmailPreview,
     CopilotEditorSection,
     CopilotReplyBottomPanel,
+    HaloAiSuggestion,
     ConversationResolveAttributesModal,
   },
   mixins: [inboxMixin, fileUploadMixin],
@@ -180,6 +184,8 @@ export default {
       showArticleSearchPopover: false,
       hasRecordedAudio: false,
       copilotAcceptedMessages: {},
+      dismissedHaloAiSuggestionId: null,
+      sendingHaloAiSuggestionId: null,
     };
   },
   computed: {
@@ -203,6 +209,12 @@ export default {
       const senderId = this.currentChat?.meta?.sender?.id;
       if (!senderId) return {};
       return this.$store.getters['contacts/getContact'](senderId);
+    },
+    haloAiSuggestion() {
+      return findActiveHaloAiSuggestion(
+        this.currentChat?.messages || [],
+        this.dismissedHaloAiSuggestionId
+      );
     },
     shouldShowReplyToMessage() {
       return (
@@ -538,6 +550,8 @@ export default {
         this.setCCAndToEmailsFromLastChat();
         // Reset Copilot editor state (includes cancelling ongoing generation)
         this.copilot.reset();
+        this.dismissedHaloAiSuggestionId = null;
+        this.sendingHaloAiSuggestionId = null;
       }
 
       if (this.isInstagramReplyRestricted) {
@@ -989,10 +1003,12 @@ export default {
           editorMessage,
           copilotAcceptedMessage,
         });
+        return true;
       } catch (error) {
         const errorMessage =
           error?.response?.data?.error || this.$t('CONVERSATION.MESSAGE_ERROR');
         useAlert(errorMessage);
+        return false;
       }
     },
     async onSendWhatsAppReply(messagePayload) {
@@ -1029,6 +1045,32 @@ export default {
     },
     executeCopilotAction(action, data) {
       this.copilot.execute(action, data);
+    },
+    applyHaloAiSuggestion(text) {
+      if (!text || !this.canSendPublicReply || this.isEditorDisabled) return;
+      this.setReplyMode(REPLY_EDITOR_MODES.REPLY);
+      this.message = text;
+      this.$nextTick(() => this.messageEditor?.focusEditorInputField());
+    },
+    dismissHaloAiSuggestion(suggestionId) {
+      this.dismissedHaloAiSuggestionId = String(suggestionId);
+    },
+    async sendHaloAiSuggestion({ text, suggestionId, originalText }) {
+      if (!text || !this.canSendPublicReply || this.isEditorDisabled) return;
+      this.sendingHaloAiSuggestionId = String(suggestionId);
+      const messagePayload = this.setReplyToInPayload({
+        conversationId: this.currentChat.id,
+        message: text,
+        private: false,
+        sender: this.sender,
+        contentAttributes: {
+          halo_ai_suggestion_run_id: String(suggestionId),
+          halo_ai_suggestion_edited: text !== originalText,
+        },
+      });
+      const sent = await this.sendMessage(messagePayload, text, '');
+      if (sent) this.dismissedHaloAiSuggestionId = String(suggestionId);
+      this.sendingHaloAiSuggestionId = null;
     },
     clearMessage() {
       this.message = '';
@@ -1395,6 +1437,15 @@ export default {
           @record-error="onRecordError"
           @play="recordingAudioState = 'playing'"
           @pause="recordingAudioState = 'paused'"
+        />
+        <HaloAiSuggestion
+          v-if="haloAiSuggestion && isDefaultEditorMode && !isOnPrivateNote"
+          :suggestion="haloAiSuggestion"
+          :disabled="isEditorDisabled || !canSendPublicReply"
+          :is-sending="sendingHaloAiSuggestionId === haloAiSuggestion.id"
+          @apply="applyHaloAiSuggestion"
+          @send="sendHaloAiSuggestion"
+          @dismiss="dismissHaloAiSuggestion"
         />
         <CopilotEditorSection
           v-if="copilot.isActive.value && !showAudioRecorderEditor"

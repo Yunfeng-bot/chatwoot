@@ -281,6 +281,14 @@
       "PRIVATE_NOTE": "Private Note",
       "SEND": "Send",
       "CREATE": "Add Note",
+      "HALO_AI": {
+        "TITLE": "Halo AI suggestion",
+        "PRIVATE_NOTICE": "Visible to agents only",
+        "EDITOR_LABEL": "Edit the suggested reply",
+        "APPLY": "Use in reply box",
+        "SEND": "Send to customer",
+        "DISMISS": "Dismiss suggestion"
+      },
       "INSERT_READ_MORE": "Read more",
       "DISMISS_REPLY": "Dismiss reply",
       "REPLYING_TO": "Replying to:",

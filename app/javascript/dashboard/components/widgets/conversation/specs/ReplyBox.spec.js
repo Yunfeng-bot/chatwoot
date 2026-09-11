@@ -431,4 +431,56 @@ describe('ReplyBox', () => {
       );
     });
   });
+
+  describe('Halo AI suggestion', () => {
+    const suggestion = {
+      id: 701,
+      private: true,
+      message_type: 'outgoing',
+      content: 'AI回复建议\n\n旧格式正文',
+      content_attributes: {
+        halo_ai_suggestion: true,
+        halo_ai_suggestion_text: '结构化建议正文',
+      },
+    };
+
+    it('renders the structured suggestion in the public reply composer', () => {
+      const { wrapper } = mountWith({
+        inbox: { channel_type: 'Channel::WebWidget' },
+        chat: { messages: [suggestion] },
+      });
+
+      expect(
+        wrapper.findComponent({ name: 'HaloAiSuggestion' }).props('suggestion')
+      ).toEqual({
+        id: '701',
+        text: '结构化建议正文',
+      });
+    });
+
+    it('hides a suggestion after a newer public or incoming message', async () => {
+      const { wrapper, store } = mountWith({
+        inbox: { channel_type: 'Channel::WebWidget' },
+        chat: { messages: [suggestion] },
+      });
+
+      store.commit('selectChat', {
+        ...REPLIABLE,
+        messages: [
+          suggestion,
+          {
+            id: 702,
+            private: false,
+            message_type: 'outgoing',
+            content: '人工回复',
+          },
+        ],
+      });
+      await nextTick();
+
+      expect(wrapper.findComponent({ name: 'HaloAiSuggestion' }).exists()).toBe(
+        false
+      );
+    });
+  });
 });

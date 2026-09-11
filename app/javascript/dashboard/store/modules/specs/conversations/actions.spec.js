@@ -56,6 +56,29 @@ describe('#hasMessageFailedWithExternalError', () => {
 });
 
 describe('#actions', () => {
+  describe('#createPendingMessageAndSend', () => {
+    it('returns the native send promise so callers can handle delivery failures', async () => {
+      const sendResult = Promise.resolve({ id: 42 });
+      dispatch.mockReturnValueOnce(sendResult);
+
+      await expect(
+        actions.createPendingMessageAndSend(
+          { dispatch },
+          { conversationId: 7, message: '建议回复', private: false }
+        )
+      ).resolves.toEqual({ id: 42 });
+
+      expect(dispatch).toHaveBeenCalledWith(
+        'sendMessageWithData',
+        expect.objectContaining({
+          conversation_id: 7,
+          content: '建议回复',
+          private: false,
+        })
+      );
+    });
+  });
+
   describe('#getConversation', () => {
     it('sends correct actions if API is success', async () => {
       axios.get.mockResolvedValue({
