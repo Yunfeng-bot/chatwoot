@@ -17,8 +17,12 @@ export default {
       type: Boolean,
       default: false,
     },
+    stale: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ['send', 'dismiss'],
+  emits: ['send', 'dismiss', 'updateText'],
   data() {
     return {
       draftText: this.suggestion.text,
@@ -26,7 +30,12 @@ export default {
   },
   computed: {
     canSend() {
-      return !this.disabled && !this.isSending && !!this.draftText.trim();
+      return (
+        !this.stale &&
+        !this.disabled &&
+        !this.isSending &&
+        !!this.draftText.trim()
+      );
     },
   },
   watch: {
@@ -45,6 +54,13 @@ export default {
     this.resizeDraftTextArea();
   },
   methods: {
+    onDraftInput() {
+      this.resizeDraftTextArea();
+      this.$emit('updateText', {
+        suggestionId: this.suggestion.id,
+        text: this.draftText,
+      });
+    },
     resizeDraftTextArea() {
       const textarea = this.$refs.draftText;
       if (!textarea) return;
@@ -82,8 +98,15 @@ export default {
         <span class="text-sm font-semibold text-n-blue-11">
           {{ $t('CONVERSATION.REPLYBOX.HALO_AI.TITLE') }}
         </span>
-        <span class="text-xs text-n-slate-11">
-          {{ $t('CONVERSATION.REPLYBOX.HALO_AI.PRIVATE_NOTICE') }}
+        <span
+          class="text-xs"
+          :class="stale ? 'text-n-yellow-11' : 'text-n-slate-11'"
+        >
+          {{
+            stale
+              ? $t('CONVERSATION.REPLYBOX.HALO_AI.STALE_NOTICE')
+              : $t('CONVERSATION.REPLYBOX.HALO_AI.PRIVATE_NOTICE')
+          }}
         </span>
       </div>
       <NextButton
@@ -105,7 +128,7 @@ export default {
       :aria-label="$t('CONVERSATION.REPLYBOX.HALO_AI.EDITOR_LABEL')"
       :disabled="disabled || isSending"
       :maxlength="4000"
-      @input="resizeDraftTextArea"
+      @input="onDraftInput"
     />
 
     <div class="mt-2 flex items-center justify-end gap-2">

@@ -1,5 +1,6 @@
 import {
   findActiveHaloAiSuggestion,
+  findLatestHaloAiSuggestion,
   getHaloAiSuggestionText,
   isHaloAiSuggestionMessage,
 } from '../haloAiSuggestion';
@@ -29,11 +30,35 @@ describe('haloAiSuggestion helpers', () => {
 
   it('hides the suggestion after a newer customer or human message', () => {
     expect(
+      findLatestHaloAiSuggestion([
+        suggestion,
+        { id: 11, private: false, message_type: 'incoming' },
+      ])
+    ).toEqual({ id: '10', text: '结构化正文', stale: true });
+    expect(
       findActiveHaloAiSuggestion([
         suggestion,
         { id: 11, private: false, message_type: 'incoming' },
       ])
     ).toBeNull();
+  });
+
+  it('keeps an edited draft visible but prevents sending after it becomes stale', async () => {
+    const wrapper = mount(HaloAiSuggestion, {
+      props: {
+        suggestion: { id: '10', text: '旧建议' },
+        stale: true,
+      },
+      global: {
+        mocks: { $t: key => key },
+        stubs: { NextButton: { template: '<button><slot /></button>' } },
+      },
+    });
+    await wrapper.find('textarea').setValue('客服正在修改的草稿');
+    expect(wrapper.emitted('updateText')).toEqual([
+      [{ suggestionId: '10', text: '客服正在修改的草稿' }],
+    ]);
+    expect(wrapper.vm.canSend).toBe(false);
   });
 
   it('supports old notes by removing only the marker prefix', () => {

@@ -62,7 +62,7 @@ import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
-import { findActiveHaloAiSuggestion } from './haloAiSuggestion';
+import { findLatestHaloAiSuggestion } from './haloAiSuggestion';
 
 const EmojiIconPicker = defineAsyncComponent(
   () =>
@@ -186,6 +186,7 @@ export default {
       copilotAcceptedMessages: {},
       dismissedHaloAiSuggestionId: null,
       sendingHaloAiSuggestionId: null,
+      haloAiDrafts: {},
     };
   },
   computed: {
@@ -210,11 +211,16 @@ export default {
       if (!senderId) return {};
       return this.$store.getters['contacts/getContact'](senderId);
     },
-    haloAiSuggestion() {
-      return findActiveHaloAiSuggestion(
+    haloAiSuggestionDisplay() {
+      const suggestion = findLatestHaloAiSuggestion(
         this.currentChat?.messages || [],
         this.dismissedHaloAiSuggestionId
       );
+      if (!suggestion) return null;
+      return {
+        ...suggestion,
+        text: this.haloAiDrafts[suggestion.id] ?? suggestion.text,
+      };
     },
     shouldShowReplyToMessage() {
       return (
@@ -552,6 +558,7 @@ export default {
         this.copilot.reset();
         this.dismissedHaloAiSuggestionId = null;
         this.sendingHaloAiSuggestionId = null;
+        this.haloAiDrafts = {};
       }
 
       if (this.isInstagramReplyRestricted) {
@@ -1049,7 +1056,14 @@ export default {
     dismissHaloAiSuggestion(suggestionId) {
       this.dismissedHaloAiSuggestionId = String(suggestionId);
     },
+    updateHaloAiSuggestionDraft({ suggestionId, text }) {
+      this.haloAiDrafts = {
+        ...this.haloAiDrafts,
+        [String(suggestionId)]: text,
+      };
+    },
     async sendHaloAiSuggestion({ text, suggestionId, originalText }) {
+      if (this.haloAiSuggestionDisplay?.stale) return;
       if (!text || !this.canSendPublicReply || this.isEditorDisabled) return;
       this.sendingHaloAiSuggestionId = String(suggestionId);
       const messagePayload = this.setReplyToInPayload({
@@ -1433,12 +1447,16 @@ export default {
           @pause="recordingAudioState = 'paused'"
         />
         <HaloAiSuggestion
-          v-if="haloAiSuggestion && isDefaultEditorMode && !isOnPrivateNote"
-          :suggestion="haloAiSuggestion"
+          v-if="
+            haloAiSuggestionDisplay && isDefaultEditorMode && !isOnPrivateNote
+          "
+          :suggestion="haloAiSuggestionDisplay"
+          :stale="haloAiSuggestionDisplay.stale"
           :disabled="isEditorDisabled || !canSendPublicReply"
-          :is-sending="sendingHaloAiSuggestionId === haloAiSuggestion.id"
+          :is-sending="sendingHaloAiSuggestionId === haloAiSuggestionDisplay.id"
           @send="sendHaloAiSuggestion"
           @dismiss="dismissHaloAiSuggestion"
+          @update-text="updateHaloAiSuggestionDraft"
         />
         <CopilotEditorSection
           v-if="copilot.isActive.value && !showAudioRecorderEditor"

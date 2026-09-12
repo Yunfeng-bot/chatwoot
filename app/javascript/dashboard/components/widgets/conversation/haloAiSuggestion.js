@@ -29,7 +29,7 @@ export const getHaloAiSuggestionText = message => {
     .trim();
 };
 
-export const findActiveHaloAiSuggestion = (
+export const findLatestHaloAiSuggestion = (
   messages = [],
   dismissedSuggestionId = null
 ) => {
@@ -45,12 +45,26 @@ export const findActiveHaloAiSuggestion = (
   const message = messages[suggestionIndex];
   const suggestionId = String(message.id);
   if (dismissedSuggestionId === suggestionId) return null;
-  if (
-    messages.slice(suggestionIndex + 1).some(isNewerHaloAiConversationActivity)
-  ) {
-    return null;
-  }
 
   const text = getHaloAiSuggestionText(message);
-  return text ? { id: suggestionId, text } : null;
+  if (!text) return null;
+  return {
+    id: suggestionId,
+    text,
+    stale: messages
+      .slice(suggestionIndex + 1)
+      .some(isNewerHaloAiConversationActivity),
+  };
+};
+
+export const findActiveHaloAiSuggestion = (
+  messages = [],
+  dismissedSuggestionId = null
+) => {
+  const suggestion = findLatestHaloAiSuggestion(
+    messages,
+    dismissedSuggestionId
+  );
+  if (!suggestion || suggestion.stale) return null;
+  return { id: suggestion.id, text: suggestion.text };
 };

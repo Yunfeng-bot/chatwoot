@@ -455,10 +455,11 @@ describe('ReplyBox', () => {
       ).toEqual({
         id: '701',
         text: '结构化建议正文',
+        stale: false,
       });
     });
 
-    it('hides a suggestion after a newer public or incoming message', async () => {
+    it('keeps the suggestion and marks it stale after a newer public or incoming message', async () => {
       const { wrapper, store } = mountWith({
         inbox: { channel_type: 'Channel::WebWidget' },
         chat: { messages: [suggestion] },
@@ -478,9 +479,11 @@ describe('ReplyBox', () => {
       });
       await nextTick();
 
-      expect(wrapper.findComponent({ name: 'HaloAiSuggestion' }).exists()).toBe(
-        false
-      );
+      const staleSuggestion = wrapper.findComponent({
+        name: 'HaloAiSuggestion',
+      });
+      expect(staleSuggestion.exists()).toBe(true);
+      expect(staleSuggestion.props('stale')).toBe(true);
     });
   });
 });

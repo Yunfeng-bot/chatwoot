@@ -245,7 +245,8 @@
       "CREATE": "添加便笺",
       "HALO_AI": {
         "TITLE": "Halo AI回复建议",
-        "PRIVATE_NOTICE": "当前仅客服可见，请确认或修改后再发送",
+      "PRIVATE_NOTICE": "当前仅客服可见，请确认或修改后再发送",
+      "STALE_NOTICE": "客户已有新消息，已保留草稿，请重新确认后再发送",
         "EDITOR_LABEL": "编辑建议回复",
         "SEND": "发送给客户",
         "DISMISS": "忽略建议"

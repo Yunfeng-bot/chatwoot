@@ -283,7 +283,8 @@
       "CREATE": "Add Note",
       "HALO_AI": {
         "TITLE": "Halo AI suggestion",
-        "PRIVATE_NOTICE": "Visible only to agents. Review or edit before sending.",
+      "PRIVATE_NOTICE": "Visible only to agents. Review or edit before sending.",
+      "STALE_NOTICE": "The customer sent a newer message. The draft is kept; review it before sending.",
         "EDITOR_LABEL": "Edit the suggested reply",
         "SEND": "Send to customer",
         "DISMISS": "Dismiss suggestion"
