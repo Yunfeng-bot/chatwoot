@@ -1046,12 +1046,6 @@ export default {
     executeCopilotAction(action, data) {
       this.copilot.execute(action, data);
     },
-    applyHaloAiSuggestion(text) {
-      if (!text || !this.canSendPublicReply || this.isEditorDisabled) return;
-      this.setReplyMode(REPLY_EDITOR_MODES.REPLY);
-      this.message = text;
-      this.$nextTick(() => this.messageEditor?.focusEditorInputField());
-    },
     dismissHaloAiSuggestion(suggestionId) {
       this.dismissedHaloAiSuggestionId = String(suggestionId);
     },
@@ -1443,7 +1437,6 @@ export default {
           :suggestion="haloAiSuggestion"
           :disabled="isEditorDisabled || !canSendPublicReply"
           :is-sending="sendingHaloAiSuggestionId === haloAiSuggestion.id"
-          @apply="applyHaloAiSuggestion"
           @send="sendHaloAiSuggestion"
           @dismiss="dismissHaloAiSuggestion"
         />

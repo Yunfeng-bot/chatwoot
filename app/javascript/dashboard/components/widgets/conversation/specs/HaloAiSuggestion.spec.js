@@ -69,4 +69,32 @@ describe('HaloAiSuggestion editor', () => {
     expect(textarea.classes()).not.toContain('resize-y');
     expect(textarea.element.style.height).toBe('184px');
   });
+
+  it('closes without copying the suggestion into the main reply box', async () => {
+    const wrapper = mount(HaloAiSuggestion, {
+      props: {
+        suggestion: { id: '10', text: '需要检查设备的安装环境。' },
+      },
+      global: {
+        mocks: { $t: key => key },
+        stubs: {
+          NextButton: {
+            name: 'NextButton',
+            props: { label: String },
+            template:
+              '<button :data-label="label" @click="$emit(\'click\')">{{ label }}</button>',
+          },
+        },
+      },
+    });
+
+    const closeButton = wrapper
+      .findAllComponents({ name: 'NextButton' })
+      .find(button => button.props('label') === 'CONVERSATION.HEADER.CLOSE');
+
+    await closeButton.vm.$emit('click');
+
+    expect(wrapper.emitted('dismiss')).toEqual([['10']]);
+    expect(wrapper.emitted('apply')).toBeUndefined();
+  });
 });

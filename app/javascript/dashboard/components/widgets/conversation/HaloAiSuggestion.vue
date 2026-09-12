@@ -18,7 +18,7 @@ export default {
       default: false,
     },
   },
-  emits: ['apply', 'send', 'dismiss'],
+  emits: ['send', 'dismiss'],
   data() {
     return {
       draftText: this.suggestion.text,
@@ -57,10 +57,6 @@ export default {
         Math.max(contentHeight, minHeight),
         maxHeight
       )}px`;
-    },
-    applySuggestion() {
-      const text = this.draftText.trim();
-      if (text) this.$emit('apply', text);
     },
     sendSuggestion() {
       const text = this.draftText.trim();
@@ -118,8 +114,8 @@ export default {
         slate
         sm
         :disabled="disabled || isSending || !draftText.trim()"
-        :label="$t('CONVERSATION.REPLYBOX.HALO_AI.APPLY')"
-        @click="applySuggestion"
+        :label="$t('CONVERSATION.HEADER.CLOSE')"
+        @click="$emit('dismiss', suggestion.id)"
       />
       <NextButton
         solid
