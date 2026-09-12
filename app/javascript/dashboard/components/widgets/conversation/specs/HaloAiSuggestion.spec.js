@@ -3,6 +3,8 @@ import {
   getHaloAiSuggestionText,
   isHaloAiSuggestionMessage,
 } from '../haloAiSuggestion';
+import { mount } from '@vue/test-utils';
+import HaloAiSuggestion from '../HaloAiSuggestion.vue';
 
 const suggestion = {
   id: 10,
@@ -41,5 +43,30 @@ describe('haloAiSuggestion helpers', () => {
         content_attributes: { halo_ai_suggestion: true },
       })
     ).toBe('请检查设备是否已开机。');
+  });
+});
+
+describe('HaloAiSuggestion editor', () => {
+  it('auto-sizes the editable suggestion and disables manual resizing', () => {
+    const wrapper = mount(HaloAiSuggestion, {
+      props: {
+        suggestion: { id: '10', text: '需要检查设备的安装环境。' },
+      },
+      global: {
+        mocks: { $t: key => key },
+        stubs: { NextButton: { template: '<button><slot /></button>' } },
+      },
+    });
+    const textarea = wrapper.find('textarea');
+    Object.defineProperty(textarea.element, 'scrollHeight', {
+      configurable: true,
+      value: 184,
+    });
+
+    wrapper.vm.resizeDraftTextArea();
+
+    expect(textarea.classes()).toContain('resize-none');
+    expect(textarea.classes()).not.toContain('resize-y');
+    expect(textarea.element.style.height).toBe('184px');
   });
 });

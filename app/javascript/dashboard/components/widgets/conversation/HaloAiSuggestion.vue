@@ -34,10 +34,30 @@ export default {
       immediate: true,
       handler() {
         this.draftText = this.suggestion.text;
+        this.$nextTick(() => this.resizeDraftTextArea());
       },
     },
+    draftText() {
+      this.$nextTick(() => this.resizeDraftTextArea());
+    },
+  },
+  mounted() {
+    this.resizeDraftTextArea();
   },
   methods: {
+    resizeDraftTextArea() {
+      const textarea = this.$refs.draftText;
+      if (!textarea) return;
+
+      const minHeight = 96;
+      const maxHeight = 320;
+      textarea.style.height = 'auto';
+      const contentHeight = textarea.scrollHeight || minHeight;
+      textarea.style.height = `${Math.min(
+        Math.max(contentHeight, minHeight),
+        maxHeight
+      )}px`;
+    },
     applySuggestion() {
       const text = this.draftText.trim();
       if (text) this.$emit('apply', text);
@@ -82,11 +102,14 @@ export default {
     </div>
 
     <textarea
+      ref="draftText"
       v-model="draftText"
-      class="min-h-24 w-full resize-y rounded-md border border-n-weak bg-n-surface-1 p-2 text-sm text-n-slate-12 outline-none focus:border-n-brand"
+      rows="1"
+      class="min-h-24 max-h-80 w-full resize-none overflow-y-auto rounded-md border border-n-weak bg-n-surface-1 p-2 text-sm text-n-slate-12 outline-none focus:border-n-brand"
       :aria-label="$t('CONVERSATION.REPLYBOX.HALO_AI.EDITOR_LABEL')"
       :disabled="disabled || isSending"
       :maxlength="4000"
+      @input="resizeDraftTextArea"
     />
 
     <div class="mt-2 flex items-center justify-end gap-2">
