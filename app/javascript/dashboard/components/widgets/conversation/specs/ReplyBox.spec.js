@@ -1,4 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
+import axios from 'axios';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import { nextTick } from 'vue';
 import { createStore } from 'vuex';
@@ -484,6 +485,47 @@ describe('ReplyBox', () => {
       });
       expect(staleSuggestion.exists()).toBe(true);
       expect(staleSuggestion.props('stale')).toBe(true);
+    });
+
+    it('writes the Engine run id to the canonical public reply attribute', async () => {
+      const { wrapper } = mountWith({
+        inbox: { channel_type: 'Channel::WebWidget' },
+        chat: { messages: [] },
+      });
+      const send = vi.spyOn(wrapper.vm, 'sendMessage').mockResolvedValue(true);
+
+      await wrapper.vm.sendHaloAiSuggestion({
+        text: '请到开阔处测试。',
+        suggestionId: '701',
+        runId: 'run-701',
+        originalText: '请到开阔处测试。',
+      });
+
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentAttributes: expect.objectContaining({
+            cs_engine_run_id: 'run-701',
+          }),
+        }),
+        '请到开阔处测试。',
+        ''
+      );
+    });
+
+    it('does not block closing when the feedback proxy is unavailable', async () => {
+      const { wrapper } = mountWith({
+        inbox: { channel_type: 'Channel::WebWidget' },
+        chat: { messages: [] },
+      });
+      vi.spyOn(axios, 'post').mockRejectedValueOnce(new Error('unavailable'));
+
+      await expect(
+        wrapper.vm.recordHaloAiFeedback({
+          suggestionId: '701',
+          runId: 'run-701',
+          rating: 'irrelevant',
+        })
+      ).resolves.toBeUndefined();
     });
   });
 });

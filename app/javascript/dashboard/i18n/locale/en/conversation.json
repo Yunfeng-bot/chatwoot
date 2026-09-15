@@ -287,7 +287,12 @@
       "STALE_NOTICE": "The customer sent a newer message. The draft is kept; review it before sending.",
         "EDITOR_LABEL": "Edit the suggested reply",
         "SEND": "Send to customer",
-        "DISMISS": "Dismiss suggestion"
+        "DISMISS": "Dismiss suggestion",
+        "FEEDBACK_PROMPT": "Before closing, rate this suggestion",
+        "FEEDBACK_HELPFUL": "Helpful",
+        "FEEDBACK_NEEDS_EDIT": "Needs edits",
+        "FEEDBACK_IRRELEVANT": "Not relevant",
+        "FEEDBACK_SKIP": "Skip"
       },
       "INSERT_READ_MORE": "Read more",
       "DISMISS_REPLY": "Dismiss reply",

@@ -1,4 +1,5 @@
 <script>
+import axios from 'axios';
 import { defineAsyncComponent, getCurrentInstance, useTemplateRef } from 'vue';
 import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
@@ -1062,7 +1063,21 @@ export default {
         [String(suggestionId)]: text,
       };
     },
-    async sendHaloAiSuggestion({ text, suggestionId, originalText }) {
+    async recordHaloAiFeedback({ suggestionId, runId, rating }) {
+      try {
+        await axios.post(
+          `/api/v1/accounts/${this.accountId}/conversations/${this.currentChat.id}/halo_ai_feedback`,
+          {
+            suggestion_id: suggestionId,
+            run_id: runId,
+            ...(rating ? { rating } : {}),
+          }
+        );
+      } catch {
+        // 反馈是旁路观测，不能阻断客服关闭建议或继续回复。
+      }
+    },
+    async sendHaloAiSuggestion({ text, suggestionId, runId, originalText }) {
       if (this.haloAiSuggestionDisplay?.stale) return;
       if (!text || !this.canSendPublicReply || this.isEditorDisabled) return;
       this.sendingHaloAiSuggestionId = String(suggestionId);
@@ -1072,7 +1087,7 @@ export default {
         private: false,
         sender: this.sender,
         contentAttributes: {
-          halo_ai_suggestion_run_id: String(suggestionId),
+          cs_engine_run_id: String(runId || suggestionId),
           halo_ai_suggestion_edited: text !== originalText,
         },
       });
@@ -1456,6 +1471,7 @@ export default {
           :is-sending="sendingHaloAiSuggestionId === haloAiSuggestionDisplay.id"
           @send="sendHaloAiSuggestion"
           @dismiss="dismissHaloAiSuggestion"
+          @feedback="recordHaloAiFeedback"
           @update-text="updateHaloAiSuggestionDraft"
         />
         <CopilotEditorSection

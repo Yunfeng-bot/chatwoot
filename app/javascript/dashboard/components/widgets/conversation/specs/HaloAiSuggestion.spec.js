@@ -28,6 +28,20 @@ describe('haloAiSuggestion helpers', () => {
     });
   });
 
+  it('keeps the Engine run id separate from the Chatwoot note id', () => {
+    expect(
+      findActiveHaloAiSuggestion([
+        {
+          ...suggestion,
+          content_attributes: {
+            ...suggestion.content_attributes,
+            cs_engine_run_id: 'run-10',
+          },
+        },
+      ])
+    ).toEqual({ id: '10', text: '结构化正文', runId: 'run-10' });
+  });
+
   it('hides the suggestion after a newer customer or human message', () => {
     expect(
       findLatestHaloAiSuggestion([
@@ -75,7 +89,11 @@ describe('HaloAiSuggestion editor', () => {
   it('auto-sizes the editable suggestion and disables manual resizing', () => {
     const wrapper = mount(HaloAiSuggestion, {
       props: {
-        suggestion: { id: '10', text: '需要检查设备的安装环境。' },
+        suggestion: {
+          id: '10',
+          text: '需要检查设备的安装环境。',
+          runId: 'run-10',
+        },
       },
       global: {
         mocks: { $t: key => key },
@@ -119,7 +137,29 @@ describe('HaloAiSuggestion editor', () => {
 
     await closeButton.vm.$emit('click');
 
-    expect(wrapper.emitted('dismiss')).toEqual([['10']]);
+    expect(wrapper.find('[data-testid="halo-ai-feedback"]').exists()).toBe(
+      true
+    );
+    expect(wrapper.emitted('dismiss')).toBeUndefined();
     expect(wrapper.emitted('apply')).toBeUndefined();
+  });
+
+  it('records a skipped rating before dismissing the suggestion', async () => {
+    const wrapper = mount(HaloAiSuggestion, {
+      props: {
+        suggestion: { id: '10', text: '需要检查设备。', runId: 'run-10' },
+      },
+      global: {
+        mocks: { $t: key => key },
+        stubs: { NextButton: { template: '<button><slot /></button>' } },
+      },
+    });
+
+    wrapper.vm.skipFeedback();
+
+    expect(wrapper.emitted('feedback')).toEqual([
+      [{ suggestionId: '10', runId: 'run-10' }],
+    ]);
+    expect(wrapper.emitted('dismiss')).toEqual([['10']]);
   });
 });

@@ -22,10 +22,11 @@ export default {
       default: false,
     },
   },
-  emits: ['send', 'dismiss', 'updateText'],
+  emits: ['send', 'dismiss', 'feedback', 'updateText'],
   data() {
     return {
       draftText: this.suggestion.text,
+      feedbackOpen: false,
     };
   },
   computed: {
@@ -54,6 +55,24 @@ export default {
     this.resizeDraftTextArea();
   },
   methods: {
+    openFeedback() {
+      this.feedbackOpen = true;
+    },
+    skipFeedback() {
+      this.$emit('feedback', {
+        suggestionId: this.suggestion.id,
+        runId: this.suggestion.runId,
+      });
+      this.$emit('dismiss', this.suggestion.id);
+    },
+    submitFeedback(rating) {
+      this.$emit('feedback', {
+        suggestionId: this.suggestion.id,
+        runId: this.suggestion.runId,
+        rating,
+      });
+      this.$emit('dismiss', this.suggestion.id);
+    },
     onDraftInput() {
       this.resizeDraftTextArea();
       this.$emit('updateText', {
@@ -80,6 +99,7 @@ export default {
         this.$emit('send', {
           text,
           suggestionId: this.suggestion.id,
+          runId: this.suggestion.runId,
           originalText: this.suggestion.text,
         });
       }
@@ -116,7 +136,7 @@ export default {
         icon="i-lucide-x"
         :aria-label="$t('CONVERSATION.REPLYBOX.HALO_AI.DISMISS')"
         :title="$t('CONVERSATION.REPLYBOX.HALO_AI.DISMISS')"
-        @click="$emit('dismiss', suggestion.id)"
+        @click="openFeedback"
       />
     </div>
 
@@ -131,14 +151,54 @@ export default {
       @input="onDraftInput"
     />
 
-    <div class="mt-2 flex items-center justify-end gap-2">
+    <div
+      v-if="feedbackOpen"
+      class="mt-2 rounded-md bg-n-slate-2 p-2"
+      data-testid="halo-ai-feedback"
+    >
+      <div class="mb-2 text-xs text-n-slate-11">
+        {{ $t('CONVERSATION.REPLYBOX.HALO_AI.FEEDBACK_PROMPT') }}
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded border border-n-weak px-2 py-1 text-xs"
+          @click="submitFeedback('helpful')"
+        >
+          {{ $t('CONVERSATION.REPLYBOX.HALO_AI.FEEDBACK_HELPFUL') }}
+        </button>
+        <button
+          type="button"
+          class="rounded border border-n-weak px-2 py-1 text-xs"
+          @click="submitFeedback('needs_edit')"
+        >
+          {{ $t('CONVERSATION.REPLYBOX.HALO_AI.FEEDBACK_NEEDS_EDIT') }}
+        </button>
+        <button
+          type="button"
+          class="rounded border border-n-weak px-2 py-1 text-xs"
+          @click="submitFeedback('irrelevant')"
+        >
+          {{ $t('CONVERSATION.REPLYBOX.HALO_AI.FEEDBACK_IRRELEVANT') }}
+        </button>
+        <button
+          type="button"
+          class="text-xs text-n-slate-11 underline"
+          @click="skipFeedback"
+        >
+          {{ $t('CONVERSATION.REPLYBOX.HALO_AI.FEEDBACK_SKIP') }}
+        </button>
+      </div>
+    </div>
+
+    <div v-else class="mt-2 flex items-center justify-end gap-2">
       <NextButton
         faded
         slate
         sm
         :disabled="disabled || isSending || !draftText.trim()"
         :label="$t('CONVERSATION.HEADER.CLOSE')"
-        @click="$emit('dismiss', suggestion.id)"
+        @click="openFeedback"
       />
       <NextButton
         solid

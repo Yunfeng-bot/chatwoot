@@ -48,9 +48,13 @@ export const findLatestHaloAiSuggestion = (
 
   const text = getHaloAiSuggestionText(message);
   if (!text) return null;
+  const runId = message.content_attributes?.cs_engine_run_id;
   return {
     id: suggestionId,
     text,
+    ...(typeof runId === 'string' && runId.trim()
+      ? { runId: runId.trim() }
+      : {}),
     stale: messages
       .slice(suggestionIndex + 1)
       .some(isNewerHaloAiConversationActivity),
@@ -66,5 +70,9 @@ export const findActiveHaloAiSuggestion = (
     dismissedSuggestionId
   );
   if (!suggestion || suggestion.stale) return null;
-  return { id: suggestion.id, text: suggestion.text };
+  return {
+    id: suggestion.id,
+    text: suggestion.text,
+    ...(suggestion.runId ? { runId: suggestion.runId } : {}),
+  };
 };

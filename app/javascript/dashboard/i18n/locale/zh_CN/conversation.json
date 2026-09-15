@@ -249,7 +249,12 @@
       "STALE_NOTICE": "客户已有新消息，已保留草稿，请重新确认后再发送",
         "EDITOR_LABEL": "编辑建议回复",
         "SEND": "发送给客户",
-        "DISMISS": "忽略建议"
+        "DISMISS": "忽略建议",
+        "FEEDBACK_PROMPT": "关闭前请评价这条建议",
+        "FEEDBACK_HELPFUL": "有帮助",
+        "FEEDBACK_NEEDS_EDIT": "需要修改",
+        "FEEDBACK_IRRELEVANT": "不相关",
+        "FEEDBACK_SKIP": "跳过"
       },
       "INSERT_READ_MORE": "查看更多",
       "DISMISS_REPLY": "忽略回复",

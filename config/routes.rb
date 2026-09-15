@@ -171,6 +171,7 @@ Rails.application.routes.draw do
                   post :retry
                 end
               end
+              post :halo_ai_feedback, on: :member, to: 'halo_ai_feedback#create'
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resource :participants, only: [:show, :create, :update, :destroy]
