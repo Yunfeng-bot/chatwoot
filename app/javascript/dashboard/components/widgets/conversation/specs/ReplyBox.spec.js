@@ -512,6 +512,30 @@ describe('ReplyBox', () => {
       );
     });
 
+    it('does not substitute the Chatwoot suggestion message id when Engine run id is absent', async () => {
+      const { wrapper } = mountWith({
+        inbox: { channel_type: 'Channel::WebWidget' },
+        chat: { messages: [] },
+      });
+      const send = vi.spyOn(wrapper.vm, 'sendMessage').mockResolvedValue(true);
+
+      await wrapper.vm.sendHaloAiSuggestion({
+        text: '请到开阔处测试。',
+        suggestionId: '701',
+        originalText: '请到开阔处测试。',
+      });
+
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentAttributes: expect.not.objectContaining({
+            cs_engine_run_id: expect.anything(),
+          }),
+        }),
+        '请到开阔处测试。',
+        ''
+      );
+    });
+
     it('does not block closing when the feedback proxy is unavailable', async () => {
       const { wrapper } = mountWith({
         inbox: { channel_type: 'Channel::WebWidget' },

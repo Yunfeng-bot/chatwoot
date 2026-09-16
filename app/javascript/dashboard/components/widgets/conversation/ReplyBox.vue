@@ -1087,7 +1087,7 @@ export default {
         private: false,
         sender: this.sender,
         contentAttributes: {
-          cs_engine_run_id: String(runId || suggestionId),
+          ...(runId ? { cs_engine_run_id: String(runId) } : {}),
           halo_ai_suggestion_edited: text !== originalText,
         },
       });
